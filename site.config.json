@@ -1,0 +1,91 @@
+{
+  "maintenance": false,
+  "tbdown": false,
+  "brand": {
+    "name": "Vexa",
+    "sub": "by Vexa Studios"
+  },
+  "links": {
+    "home": "https://vexaaai.vercel.app",
+    "dashboard": "https://dash.vexaaai.vercel.app",
+    "roblox": "https://create.roblox.com/store/asset/131066175415119/Vexa-AI",
+    "github": null
+  },
+  "hero": {
+    "badge": "Now in Beta · Free to use",
+    "heading": "Generate Roblox scripts",
+    "headingGradient": "with a single prompt.",
+    "sub": "Vexa writes production-ready Luau code, full instance trees, and wired-up service architectures — just describe what you want to build."
+  },
+  "stats": [
+    { "value": "< 3s",  "label": "Avg generation time" },
+    { "value": "Luau",  "label": "Native language output" },
+    { "value": "Free",  "label": "No paywalls ever" },
+    { "value": "10+",   "label": "AI models available" }
+  ],
+  "features": [
+    {
+      "title": "One-Click Install",
+      "desc": "Download the Windows installer and get started in seconds. No setup, no configuration — just install and go.",
+      "color": "#f5a623",
+      "glow": "rgba(245,166,35,0.10)",
+      "icon": "roblox"
+    },
+    {
+      "title": "Studio MCP Bridge",
+      "desc": "Generate scripts and apply them directly to Roblox Studio via a local MCP bridge — no plugin required.",
+      "color": "#8b7ff5",
+      "glow": "rgba(139,127,245,0.12)",
+      "icon": "plugin"
+    },
+    {
+      "title": "Completely Free",
+      "desc": "No paywalls, no credit limits, no subscription. Vexa is completely free to use for every Roblox developer.",
+      "color": "#bef264",
+      "glow": "rgba(190,242,100,0.12)",
+      "icon": "free"
+    },
+    {
+      "title": "Wide Variety of Models",
+      "desc": "Choose from multiple AI models depending on your task — fast generation for quick scripts, or more powerful models for complex systems.",
+      "color": "#c4b5fd",
+      "glow": "rgba(196,181,253,0.12)",
+      "icon": "models"
+    },
+    {
+      "title": "Very Simple to Use",
+      "desc": "No prompt engineering needed. Just describe what you want to build in plain English and Vexa handles the rest.",
+      "color": "#a78bfa",
+      "glow": "rgba(167,139,250,0.10)",
+      "icon": "simple"
+    },
+    {
+      "title": "Complete Systems",
+      "desc": "Not just scripts — Vexa generates full instance trees, RemoteEvents, GUIs, and wired-up service architectures.",
+      "color": "#a3e635",
+      "glow": "rgba(163,230,53,0.12)",
+      "icon": "code"
+    },
+    {
+      "title": "Animation, VFX, Cinematic & 3D",
+      "desc": "Create pro keyframe animations as native KeyframeSequence objects, cinematic camera sequences, particle VFX and multi-part 3D models — applied directly in Studio via the MCP bridge.",
+      "color": "#a78bfa",
+      "glow": "rgba(167,139,250,0.12)",
+      "icon": "simple"
+    },
+    {
+      "title": "Type-Aware Generation",
+      "desc": "Pick Scripting, Animation, VFX, Cinematic or 3D Model and Vexa's engine focuses the whole generation on that exact output.",
+      "color": "#9d8bff",
+      "glow": "rgba(157,139,255,0.12)",
+      "icon": "models"
+    }
+  ],
+  "cta": {
+    "heading": "Ready to build faster?",
+    "sub": "Download Vexa and start generating complete Roblox systems today."
+  },
+  "footer": {
+    "copy": "Vexa Studios"
+  }
+}

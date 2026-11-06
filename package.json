@@ -1,0 +1,125 @@
+{
+  "name": "vexa",
+  "productName": "Vexa",
+  "version": "1.8.0",
+  "private": true,
+  "description": "AI-powered Roblox script generator",
+  "author": "Vexa Studios",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "electron": "electron .",
+    "electron:dev": "npm run dev & sleep 5 && electron .",
+    "electron:build": "next build && electron-builder --win --publish never",
+    "electron:build:mac": "next build && electron-builder --mac --publish never",
+    "electron:build:linux": "next build && electron-builder --linux --publish never",
+    "electron:build:low": "set VEXA_DEFAULT_TIER=S && next build && electron-builder --win --publish never -c.productName=Vexa-Low -c.nsis.shortcutName=Vexa-Low",
+    "electron:build:mid": "set VEXA_DEFAULT_TIER=M && next build && electron-builder --win --publish never",
+    "electron:build:high": "set VEXA_DEFAULT_TIER=L && next build && electron-builder --win --publish never -c.productName=Vexa-High -c.nsis.shortcutName=Vexa-High"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "motion": "^13.1.0",
+    "next": "16.1.6",
+    "node-llama-cpp": "^3.21.1",
+    "openai": "^6.48.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "electron": "^43.1.1",
+    "electron-builder": "^26.15.3",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "pg": "^8.22.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "build": {
+    "appId": "com.vexa.ai",
+    "productName": "Vexa",
+    "protocols": [
+      {
+        "name": "Vexa",
+        "schemes": [
+          "vexa"
+        ]
+      }
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "public/**/*",
+      ".next/standalone/**/*",
+      ".next/static/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      ".next/standalone/**/*",
+      ".next/static/**/*",
+      "public/**/*",
+      "electron/**/*.mjs",
+      "node_modules/node-llama-cpp/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "node-runtime",
+        "to": "node-runtime"
+      },
+      {
+        "from": "bridge",
+        "to": "bridge"
+      },
+      {
+        "from": "Vexa Bridge.bat",
+        "to": "Vexa Bridge.bat"
+      },
+      {
+        "from": "servers",
+        "to": "servers"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "public/icons/android-chrome-512x512.png"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "public/icons/android-chrome-512x512.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Vexa",
+      "runAfterFinish": true,
+      "include": "build/installer.nsh"
+    }
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true,
+    "node-llama-cpp@3.21.1": true
+  }
+}
