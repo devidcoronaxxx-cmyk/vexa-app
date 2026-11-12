@@ -106,7 +106,6 @@ export default function HomePage() {
             ))}
           </nav>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <a href="/local" className="cl-link" style={{ fontSize: 13.5, fontWeight: 600, color: MUTED, textDecoration: "none" }}>Apri app</a>
             <button type="button" onClick={toggle} aria-label="Toggle theme" suppressHydrationWarning style={{ width: 36, height: 36, borderRadius: "50%", border: "1px solid #d1d5db", background: "transparent", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#1a1f2e", marginRight: 8 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
@@ -119,6 +118,7 @@ export default function HomePage() {
             {NAV.map(l => (
               <a key={l.href} href={l.href} onClick={() => setMenu(false)} style={{ fontSize: 14, fontWeight: 600, color: INK, textDecoration: "none", padding: "10px 4px" }}>{l.label}</a>
             ))}
+            <a href="/download" onClick={() => setMenu(false)} style={{ fontSize: 14, fontWeight: 700, color: INK, textDecoration: "none", padding: "10px 4px" }}>Download</a>
           </div>
         )}
       </header>
@@ -259,7 +259,7 @@ export default function HomePage() {
           </div>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>Prodotto</div>
-            {[["Scarica", "/download"], ["Apri app", "/local"], ["Accedi", "/local"]].map(([l, h]) => (
+            {[["Scarica", "/download"], ["Accedi", "/local"]].map(([l, h]) => (
               <div key={l} style={{ marginBottom: 10 }}><Link href={h} style={{ fontSize: 14, color: INK, textDecoration: "none" }}>{l}</Link></div>
             ))}
           </div>
