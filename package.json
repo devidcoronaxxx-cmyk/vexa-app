@@ -23,6 +23,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.0",
+    "electron-updater": "^6.8.11",
     "motion": "^13.1.0",
     "next": "16.1.6",
     "node-llama-cpp": "^3.21.1",
@@ -57,6 +58,14 @@
     "directories": {
       "output": "release"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "devidcoronaxxx-cmyk",
+        "repo": "vexa-app",
+        "releaseType": "release"
+      }
+    ],
     "files": [
       "electron/**/*",
       "public/**/*",

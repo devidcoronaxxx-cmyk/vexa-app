@@ -159,6 +159,23 @@ export default function Settings({
   const [openCloudKey, setOpenCloudKey] = useState(() => { try { return localStorage.getItem("vexa_open_cloud_key") || "" } catch { return "" } })
   const [savingKey, setSavingKey] = useState(false)
   const [keyMsg, setKeyMsg] = useState("")
+  const [updateMsg, setUpdateMsg] = useState("")
+  const [updateBusy, setUpdateBusy] = useState(false)
+
+  const checkUpdates = async () => {
+    const api = (window as Window & { electronAPI?: { checkForUpdates?: () => Promise<{ ok?: boolean; version?: string; error?: string } | true> } }).electronAPI
+    if (!api?.checkForUpdates) { setUpdateMsg("Aggiornamenti disponibili solo nell'app desktop."); return }
+    setUpdateBusy(true)
+    setUpdateMsg("Controllo…")
+    try {
+      const r = await api.checkForUpdates()
+      if (r && typeof r === "object" && r.ok === false) setUpdateMsg(r.error || "Controllo non riuscito.")
+      else setUpdateMsg("Se c'è una nuova versione la scarico in background (solo le parti cambiate) e ti chiedo di riavviare.")
+    } catch (e) {
+      setUpdateMsg("Controllo non riuscito: " + (e instanceof Error ? e.message : String(e)))
+    }
+    setUpdateBusy(false)
+  }
 
   const activeLocale = locale ?? i18n.locale
   const currentLocale = LOCALES.find(l => l.code === activeLocale) ?? LOCALES[0]
@@ -306,6 +323,17 @@ export default function Settings({
               <ToggleRow icon="bi-wind" title={i18n.t("settings.reduceMotion")} sub={i18n.t("settings.reduceMotion.help")} value={reduceMotion ?? false} onChange={() => setReduceMotion?.(!reduceMotion)} />
               <ToggleRow icon="bi-layout-sidebar-inset" title={i18n.t("settings.compactMode")} sub={i18n.t("settings.compactMode.help")} value={compactMode ?? false} onChange={() => setCompactMode?.(!compactMode)} />
               <ToggleRow icon="bi-send" title={i18n.t("settings.sendOnEnter")} sub={isMobile ? i18n.t("settings.sendOnEnter.mobile") : i18n.t("settings.sendOnEnter.desktop")} value={sendOnEnter ?? true} onChange={() => { if (!isMobile) setSendOnEnter?.(!sendOnEnter) }} />
+              <div style={{ marginTop: 16, padding: "13px 15px", background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.09)", borderRadius: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <i className="bi bi-arrow-repeat" style={{ fontSize: 15, color: "rgba(255,255,255,.55)" }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#e8e9ec" }}>Aggiornamenti</div>
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,.35)", marginTop: 2 }}>Scarica solo le parti cambiate: niente reinstallazione completa.</div>
+                  </div>
+                  <button type="button" onClick={checkUpdates} disabled={updateBusy} style={{ padding: "8px 12px", borderRadius: 9, background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.12)", color: "#e8e9ec", fontSize: 12.5, fontWeight: 600, cursor: updateBusy ? "wait" : "pointer", fontFamily: "inherit" }}>{updateBusy ? "Controllo…" : "Controlla"}</button>
+                </div>
+                {updateMsg && <div style={{ marginTop: 8, fontSize: 12, color: "rgba(255,255,255,.45)", lineHeight: 1.5 }}>{updateMsg}</div>}
+              </div>
             </div>
           )}
 

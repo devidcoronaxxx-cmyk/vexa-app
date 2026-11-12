@@ -6,6 +6,7 @@ const net = require("net");
 const http = require("http");
 const https = require("https");
 const { RojoManager } = require("./rojo-manager");
+const { autoUpdater } = require("electron-updater");
 
 const PROTOCOL = "vexa";
 const APP_ID = "com.vexa.ai";
@@ -1050,6 +1051,55 @@ async function checkForUpdates() {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// Auto-update (electron-updater). Differential NSIS updates: only the blocks
+// that actually changed are downloaded (usually a few MB instead of ~490 MB),
+// then the app restarts on the new version. The feed is the GitHub release
+// configured in package.json -> build.publish.
+// ---------------------------------------------------------------------------
+let autoUpdaterReady = false;
+function initAutoUpdater() {
+  if (autoUpdaterReady) return;
+  if (!app.isPackaged || process.platform !== "win32") return;
+  autoUpdaterReady = true;
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.logger = console;
+
+  autoUpdater.on("error", (e) => console.error("[updater]", (e && e.message) || e));
+  autoUpdater.on("update-available", (info) => console.log("[updater] available:", info && info.version));
+  autoUpdater.on("update-not-available", () => console.log("[updater] up to date"));
+  autoUpdater.on("download-progress", (p) => {
+    if (p && typeof p.percent === "number") console.log("[updater] " + Math.round(p.percent) + "%");
+  });
+  autoUpdater.on("update-downloaded", async (info) => {
+    try {
+      const { response } = await dialog.showMessageBox(mainWindow, {
+        type: "info",
+        title: "Aggiornamento pronto",
+        message: `Vexa ${info && info.version ? info.version : ""} è pronto`,
+        detail: "Riavvia ora per applicarlo. Se scegli Dopo, verrà applicato alla prossima chiusura.",
+        buttons: ["Riavvia ora", "Dopo"],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (response === 0) {
+        appIsQuitting = true;
+        killNextServer();
+        setImmediate(() => autoUpdater.quitAndInstall(false, true));
+      }
+    } catch (e) {
+      console.error("[updater] install prompt:", e.message);
+    }
+  });
+
+  const check = () => autoUpdater.checkForUpdates().catch((e) => console.warn("[updater] check:", (e && e.message) || e));
+  check();
+  const iv = setInterval(check, 6 * 60 * 60 * 1000);
+  if (iv.unref) iv.unref();
+}
+
 const ERROR_HTML = `<!doctype html>
 <html><head><meta charset="utf-8"><title>Vexa</title>
 <style>body{margin:0;background:#09090b;color:#e5e5e5;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh}
@@ -1097,6 +1147,7 @@ if (gotLock) {
       bootLocalLlm();
       bootHunyuan();
       showApp();
+      initAutoUpdater();
     } else {
       console.error("[electron] server did not become ready in time");
       showError();
@@ -1212,8 +1263,16 @@ if (gotLock) {
     })
 
     ipcMain.handle("app:check-updates", async () => {
+      if (app.isPackaged && process.platform === "win32") {
+        try {
+          const r = await autoUpdater.checkForUpdates();
+          return { ok: true, version: r && r.updateInfo ? r.updateInfo.version : APP_VERSION };
+        } catch (e) {
+          return { ok: false, error: e.message };
+        }
+      }
       await checkForUpdates();
-      return true;
+      return { ok: true, version: APP_VERSION };
     });
 
     // Save the user's own NVIDIA NIM key (from the in-app GLM-5.3 setup sheet)
