@@ -136,7 +136,7 @@ export default function HomePage() {
         </p>
         <div className="cl-in cl-in-3" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <a href="/download" className="cl-btn-dark" style={{ fontSize: 15, fontWeight: 700, color: "#fff", background: INK, textDecoration: "none", padding: "15px 32px", borderRadius: 999, transition: "background .15s" }}>Download</a>
-        <a href="/download" className="cl-btn-line" style={{ fontSize: 15, fontWeight: 700, color: INK, background: "transparent", border: `1.5px solid #d8d5c8`, textDecoration: "none", padding: "14px 30px", borderRadius: 999, transition: "border-color .15s" }}>Download</a>
+        <a href="#how" className="cl-btn-line" style={{ fontSize: 15, fontWeight: 700, color: INK, background: "transparent", border: `1.5px solid #d8d5c8`, textDecoration: "none", padding: "14px 30px", borderRadius: 999, transition: "border-color .15s" }}>Come funziona</a>
         </div>
         <div style={{ display: "flex", gap: 0, justifyContent: "center", flexWrap: "wrap", marginTop: 56, borderTop: `1px solid ${LINE}`, maxWidth: 760, marginLeft: "auto", marginRight: "auto" }}>
           {stats.map((s, i) => (
