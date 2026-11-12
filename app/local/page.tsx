@@ -939,9 +939,6 @@ export default function LocalDashboard() {
             </button>
             {sidebarOpen && (
               <>
-                <button type="button" className="cl-icon" title="Pannello" style={{ width: 30, height: 30, borderRadius: 8, border: "none", background: "transparent", color: "rgba(255,255,255,0.6)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLButtonElement).style.color = "#fff" }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.6)" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2.5" /><line x1="14.5" y1="3" x2="14.5" y2="21" /></svg>
-                </button>
                 <button type="button" className="cl-icon" title="Indietro" onClick={() => window.history.back()} style={{ width: 30, height: 30, borderRadius: 8, border: "none", background: "transparent", color: "rgba(255,255,255,0.6)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLButtonElement).style.color = "#fff" }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.6)" }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 5 5 12 12 19" /></svg>
                 </button>
@@ -950,12 +947,6 @@ export default function LocalDashboard() {
                 </button>
                 <button type="button" className="cl-icon" title="Cerca" onClick={() => searchRef.current?.focus()} style={{ width: 30, height: 30, borderRadius: 8, border: "none", background: "transparent", color: "rgba(255,255,255,0.6)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLButtonElement).style.color = "#fff" }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.6)" }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="11" cy="11" r="3.2" /><line x1="13.6" y1="13.6" x2="16.2" y2="16.2" /></svg>
-                </button>
-                <button type="button" title="In incognito — presto" style={{ width: 30, height: 30, borderRadius: 8, border: "none", background: "transparent", color: "rgba(255,255,255,0.28)", cursor: "default", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-                </button>
-                <button type="button" title="Code — presto" style={{ width: 30, height: 30, borderRadius: 8, border: "none", background: "transparent", color: "rgba(255,255,255,0.28)", cursor: "default", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg>
                 </button>
               </>
             )}
@@ -1074,12 +1065,6 @@ export default function LocalDashboard() {
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                 </button>
                 <div style={{ flex: 1 }} />
-                <button type="button" title="Voce — presto disponibile" style={{ width: 30, height: 30, borderRadius: 8, border: "none", background: "transparent", color: "rgba(255,255,255,0.72)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "default" }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0" /><line x1="12" y1="18" x2="12" y2="22" /></svg>
-                </button>
-                <button type="button" title="Modalità voce — presto disponibile" style={{ width: 30, height: 30, borderRadius: 8, border: "none", background: "transparent", color: "rgba(255,255,255,0.72)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "default" }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="10" x2="4" y2="14" /><line x1="8" y1="7" x2="8" y2="17" /><line x1="12" y1="4" x2="12" y2="20" /><line x1="16" y1="8" x2="16" y2="16" /><line x1="20" y1="10" x2="20" y2="14" /></svg>
-                </button>
                 <button
                   type="button"
                   onClick={submitPrompt}
@@ -1132,8 +1117,6 @@ export default function LocalDashboard() {
                     </div>
                   )}
                 </div>
-                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.38)" }}>Medio</span>
-                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)" }}>Generate</span>
               </div>
             </div>
           </div>
