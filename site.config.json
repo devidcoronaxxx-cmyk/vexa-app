@@ -1,0 +1,68 @@
+{
+  "maintenance": false,
+  "tbdown": false,
+  "brand": {
+    "name": "Vexa",
+    "sub": "by Vexa Studios"
+  },
+  "links": {
+    "home": "https://vexaaai.vercel.app",
+    "dashboard": "https://dash.vexaaai.vercel.app",
+    "roblox": "https://create.roblox.com/store/asset/131066175415119/Vexa-AI",
+    "github": null
+  },
+  "hero": {
+    "badge": "Now in Beta · Free to use",
+    "heading": "Generate Roblox scripts",
+    "headingGradient": "with a single prompt.",
+    "sub": "Vexa writes production-ready Luau code, full instance trees, and wired-up service architectures — just describe what you want to build."
+  },
+  "stats": [
+    {
+      "value": "Luau",
+      "label": "Native language output"
+    },
+    {
+      "value": "Free",
+      "label": "No paywalls ever"
+    },
+    {
+      "value": "Rojo",
+      "label": "Live sync to Studio"
+    },
+    {
+      "value": "Local",
+      "label": "Runs on your machine"
+    }
+  ],
+  "features": [
+    {
+      "title": "One-Click Install",
+      "desc": "Download the Windows installer and get started in seconds. Models download automatically on first launch.",
+      "color": "#f5a623",
+      "glow": "rgba(245,166,35,0.10)",
+      "icon": "roblox"
+    },
+    {
+      "title": "Rojo Sync",
+      "desc": "Generate scripts and apply them directly to Roblox Studio via Rojo — no plugin, no bridge required.",
+      "color": "#8b7ff5",
+      "glow": "rgba(139,127,245,0.12)",
+      "icon": "plugin"
+    },
+    {
+      "title": "Completely Free",
+      "desc": "No paywalls, no credit limits, no subscription. Vexa is completely free to use for every Roblox developer.",
+      "color": "#bef264",
+      "glow": "rgba(190,242,100,0.12)",
+      "icon": "free"
+    }
+  ],
+  "cta": {
+    "heading": "Ready to build faster?",
+    "sub": "Download Vexa and start generating complete Roblox systems today."
+  },
+  "footer": {
+    "copy": "Vexa Studios"
+  }
+}

@@ -1,0 +1,8 @@
+Start-Sleep -Seconds 2
+"electron vivi: $((Get-Process electron -ErrorAction SilentlyContinue|Measure-Object).Count)"
+"porta 3000 owner: $((Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue).OwningProcess)"
+Add-Type -TypeDefinition 'using System;using System.Text;using System.Runtime.InteropServices;public class WC{[DllImport("user32.dll")]public static extern bool EnumWindows(E cb,IntPtr l);[DllImport("user32.dll")]public static extern int GetWindowText(IntPtr h,StringBuilder s,int n);[DllImport("user32.dll")]public static extern uint GetWindowThreadProcessId(IntPtr h,out uint p);[DllImport("user32.dll")]public static extern bool IsWindowVisible(IntPtr h);[DllImport("user32.dll")]public static extern bool SetForegroundWindow(IntPtr h);public delegate bool E(IntPtr h,IntPtr l);}'
+$pids=@(Get-Process electron -ErrorAction SilentlyContinue|ForEach-Object{$_.Id})
+$cb={param($h,$l) $sb=New-Object System.Text.StringBuilder 256;[WC]::GetWindowText($h,$sb,255)|Out-Null;$pp=0;[WC]::GetWindowThreadProcessId($h,[ref]$pp)|Out-Null;if($pp -in $pids -and [WC]::IsWindowVisible($h)){"WIN pid=$pp title='$($sb.ToString())'";[WC]::SetForegroundWindow($h)|Out-Null;"focus ok"};return $true}
+[WC]::EnumWindows($cb,[IntPtr]::Zero)|Out-Null
+try{$r=Invoke-WebRequest -Uri "http://localhost:3000/local" -UseBasicParsing -TimeoutSec 15;"local status=$($r.StatusCode) len=$($r.Content.Length)"}catch{"local KO: $($_.Exception.Message)"}

@@ -1,0 +1,5 @@
+Add-Type -TypeDefinition 'using System;using System.Text;using System.Runtime.InteropServices;public class WF{[DllImport("user32.dll")]public static extern bool EnumWindows(E cb,IntPtr l);[DllImport("user32.dll")]public static extern int GetWindowText(IntPtr h,StringBuilder s,int n);[DllImport("user32.dll")]public static extern uint GetWindowThreadProcessId(IntPtr h,out uint p);[DllImport("user32.dll")]public static extern bool IsWindowVisible(IntPtr h);[DllImport("user32.dll")]public static extern bool SetForegroundWindow(IntPtr h);public delegate bool E(IntPtr h,IntPtr l);}'
+$pids=@(Get-Process electron -ErrorAction SilentlyContinue|ForEach-Object{$_.Id})
+"electron: $($pids -join ',')"
+$cb={param($h,$l) $sb=New-Object System.Text.StringBuilder 256;[WF]::GetWindowText($h,$sb,255)|Out-Null;$pp=0;[WF]::GetWindowThreadProcessId($h,[ref]$pp)|Out-Null;if($pp -in $pids -and [WF]::IsWindowVisible($h) -and $sb.Length -gt 0){"WIN '$($sb.ToString())'";[WF]::SetForegroundWindow($h)|Out-Null;"in primo piano"};return $true}
+[WF]::EnumWindows($cb,[IntPtr]::Zero)|Out-Null
