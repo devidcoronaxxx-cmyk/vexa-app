@@ -542,7 +542,7 @@ function RobloxStudioModal({ open, onClose, onOpenStudio }: { open: boolean; onC
           </div>
           <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6, letterSpacing: "-0.02em", color: "#fff" }}>Open Roblox Studio?</div>
           <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.55 }}>
-            Start building with Vexa right away. The local MCP bridge will connect automatically.
+            Start building with Vexa right away. Rojo sync connects to Studio automatically.
           </div>
         </div>
         <div style={{ height: 1, background: "rgba(255,255,255,0.07)" }} />

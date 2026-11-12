@@ -1657,9 +1657,8 @@ export default function ProjectChatPage() {
     }
   }, [projectId, isLocal])
 
-  // Send the generated payload to Roblox Studio via the local MCP bridge
-  // (Vexa Bridge.bat → Studio built-in MCP server). No plugin is involved.
-  // If the bridge is offline, show a message telling the user to start it.
+  // Send the generated payload to the local Rojo project folder.
+  // Rojo serves it and Studio syncs it live through the official Rojo plugin.
   // Write the generated payload into the local Rojo project. Rojo syncs the
   // files into Studio through the official plugin — no bridge, no MCP.
   const applyToStudio = async (output: Record<string, unknown>, projectId: string) => {

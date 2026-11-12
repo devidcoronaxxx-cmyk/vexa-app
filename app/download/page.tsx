@@ -99,7 +99,7 @@ export default function DownloadPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
           {[
             { t: "Sistemi completi", d: "Script, istanze, GUI, RemoteEvent — tutto generato e coerente.", icon: "bi-code-slash" },
-            { t: "Sync con Rojo", d: "I file vanno nel progetto Rojo e Studio li prende live. Niente plugin, niente bridge.", icon: "bi-arrow-repeat" },
+            { t: "Sync con Rojo", d: "I file vanno nel progetto Rojo e Studio li prende live, senza copiare e incollare.", icon: "bi-arrow-repeat" },
             { t: "Locali e gratis", d: "I modelli girano sulla tua macchina. Nessun costo, nessun limite.", icon: "bi-pc-display" },
           ].map(f => (
             <div key={f.t} style={{ background: "#fff", border: "1px solid #e5e5e5", borderRadius: 16, padding: "22px 20px" }}>

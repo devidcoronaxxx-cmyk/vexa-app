@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 const TITLE = "Download Vexa";
 const DESC =
-  "Download the Vexa app and connect to Roblox Studio's built-in MCP server. Generate production-ready Roblox scripts, systems, and instances with AI — free.";
+  "Download the Vexa app and sync directly with Roblox Studio via Rojo. Generate production-ready Roblox scripts, systems, and instances with AI — free.";
 
 export const metadata: Metadata = {
   title: TITLE,

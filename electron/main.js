@@ -1094,9 +1094,6 @@ if (gotLock) {
     const serverReady = await waitForServer(30000);
     if (serverReady) {
       console.log("[electron] server ready, loading app");
-      ensureStudioPlugin();
-      startBridge();
-      superviseBridge();
       bootLocalLlm();
       bootHunyuan();
       showApp();

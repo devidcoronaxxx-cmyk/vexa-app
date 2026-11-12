@@ -77,14 +77,6 @@
         "to": "node-runtime"
       },
       {
-        "from": "bridge",
-        "to": "bridge"
-      },
-      {
-        "from": "Vexa Bridge.bat",
-        "to": "Vexa Bridge.bat"
-      },
-      {
         "from": "servers",
         "to": "servers"
       }

@@ -10,7 +10,6 @@ import type { Profile } from "@/lib/supabase";
 
 const INTER = "'Space Grotesk', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const DISPLAY = "'Space Grotesk', Inter, -apple-system, sans-serif";
-const BRIDGE_URL = "http://127.0.0.1:8765";
 const SB_URL = "https://urenbjultzmpmamcaogv.supabase.co";
 const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
@@ -215,16 +214,40 @@ function DeleteConfirmModal({ open, projectName, onConfirm, onCancel }: { open: 
   );
 }
 
+type RojoStatus = {
+  installed?: boolean;
+  running?: boolean;
+  version?: string | null;
+  port?: number;
+  url?: string;
+  workspace?: string;
+  error?: string | null;
+};
+
+type RojoApi = {
+  status: () => Promise<RojoStatus>;
+  start: () => Promise<RojoStatus & { ok?: boolean; error?: string }>;
+  stop: () => Promise<unknown>;
+  openWorkspace: () => Promise<{ ok?: boolean; dir?: string }>;
+};
+
+function rojoApi(): RojoApi | null {
+  if (typeof window === "undefined") return null;
+  const api = (window as Window & { electronAPI?: { rojo?: RojoApi } }).electronAPI;
+  return api?.rojo ?? null;
+}
+
 function ConnectStudioModal({ open, onClose, onConnected }: { open: boolean; onClose: () => void; onConnected: (status: string) => void }) {
   const [closing, setClosing] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [state, setState] = useState<{ ok: boolean; bridge: boolean; text: string }>({ ok: false, bridge: false, text: "Checking…" });
+  const [busy, setBusy] = useState(false);
+  const [state, setState] = useState<{ ok: boolean; running: boolean; text: string }>({ ok: false, running: false, text: "Controllo Rojo…" });
   const [prevOpen, setPrevOpen] = useState(open);
   const [attempt, setAttempt] = useState(0);
 
   if (open !== prevOpen) {
     setPrevOpen(open);
-    if (open) { setClosing(false); setChecking(true); setState({ ok: false, bridge: false, text: "Checking…" }); }
+    if (open) { setClosing(false); setChecking(true); setState({ ok: false, running: false, text: "Controllo Rojo…" }); }
   }
 
   const close = useCallback(() => { setClosing(true); setTimeout(() => { setClosing(false); onClose(); }, 220); }, [onClose]);
@@ -236,29 +259,49 @@ function ConnectStudioModal({ open, onClose, onConnected }: { open: boolean; onC
     const check = async () => {
       await Promise.resolve();
       if (cancelled) return;
-      setChecking(true); setState({ ok: false, bridge: false, text: "Checking…" });
-      let bridge = false;
+      setChecking(true);
+      const api = rojoApi();
+      if (!api) {
+        setState({ ok: false, running: false, text: "Apri l'app desktop Vexa: Rojo gira solo nella versione installata." });
+        setChecking(false);
+        return;
+      }
       try {
-        const res = await fetch(`${BRIDGE_URL}/health`, { cache: "no-store", signal: AbortSignal.timeout(3000) });
-        bridge = res.ok;
-        if (!bridge) throw new Error();
-        const h = await res.json();
+        const s = await api.status();
         if (cancelled) return;
-        if (h?.studio?.ready === true) {
-          setState({ ok: true, bridge: true, text: "Connected to Roblox Studio via MCP. Ready to apply generations." });
-          onConnected("gx-mcp-local");
-        } else if (h?.studio?.error) {
-          setState({ ok: false, bridge: true, text: `Bridge running but Studio MCP is not ready: ${h.studio.error}` });
+        if (!s.installed) {
+          setState({ ok: false, running: false, text: "Rojo non è installato su questo PC. Installalo con aftman/rokit o da rojo.space, poi premi Re-check." });
+        } else if (s.running) {
+          setState({ ok: true, running: true, text: `Server Rojo attivo su ${s.url ?? "localhost:34872"}. In Studio apri il plugin Rojo, premi Connect e inserisci quell'indirizzo.` });
+          onConnected("rojo");
         } else {
-          setState({ ok: false, bridge: true, text: "Bridge running, waiting for Studio MCP…" });
+          setState({ ok: false, running: false, text: `Rojo ${s.version ? s.version + " " : ""}rilevato ma spento. Premi "Avvia Rojo" per aprire il server locale sulla porta ${s.port ?? 34872}.` });
         }
       } catch {
-        if (!cancelled) setState({ ok: false, bridge: false, text: "Vexa Bridge is offline. It starts with the app — wait a few seconds and press Re-check." });
+        if (!cancelled) setState({ ok: false, running: false, text: "Impossibile leggere lo stato di Rojo. Riavvia l'app." });
       } finally { if (!cancelled) setChecking(false); }
     };
     check();
     return () => { cancelled = true; };
   }, [open, attempt, onConnected]);
+
+  const startRojo = async () => {
+    const api = rojoApi();
+    if (!api) { setAttempt(v => v + 1); return; }
+    setBusy(true);
+    try { await api.start(); } catch { /* status check below shows the reason */ }
+    setBusy(false);
+    setAttempt(v => v + 1);
+  };
+
+  const stopRojo = async () => {
+    const api = rojoApi();
+    if (!api) return;
+    setBusy(true);
+    try { await api.stop(); } catch { /* ignore */ }
+    setBusy(false);
+    setAttempt(v => v + 1);
+  };
 
   if (!open && !closing) return null;
   return (
@@ -267,8 +310,8 @@ function ConnectStudioModal({ open, onClose, onConnected }: { open: boolean; onC
       <div style={{ position: "relative", width: "min(440px,calc(100vw - 32px))", background: "rgba(13,16,21,0.98)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 24px 80px rgba(0,0,0,0.55)", borderRadius: 22, overflow: "hidden", animation: closing ? "gScaleOut .22s ease forwards" : "gScaleIn .3s cubic-bezier(.16,1,.3,1) forwards" }}>
         <div style={{ padding: "22px 22px 18px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>Connect to Studio</div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,.4)", marginTop: 3 }}>Via the local MCP bridge — no plugin needed</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>Connetti a Studio</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,.4)", marginTop: 3 }}>Sync dei file con Roblox Studio via Rojo</div>
           </div>
           <button type="button" onClick={close} style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "rgba(255,255,255,.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9 3L3 9M3 3l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
@@ -277,31 +320,44 @@ function ConnectStudioModal({ open, onClose, onConnected }: { open: boolean; onC
         <div style={{ padding: "22px 22px 18px", display: "flex", flexDirection: "column", gap: 16 }}>
           {checking ? (
             <div style={{ display: "flex", alignItems: "center", gap: 10, color: "rgba(255,255,255,.5)", fontSize: 13 }}>
-              <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,.12)", borderTopColor: "rgba(255,255,255,.65)", animation: "spin .7s linear infinite" }} />
+              <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,.12)", borderTopColor: "rgba(255,255,255,.65)", animation: "gSpin .7s linear infinite" }} />
               {state.text}
             </div>
           ) : (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 10, height: 10, borderRadius: "50%", background: state.ok ? LEMON : state.bridge ? "#f59e0b" : "#3f3f46", flexShrink: 0 }} />
-                <span style={{ fontSize: 14, fontWeight: 600, color: state.ok ? LEMON : state.bridge ? "#f59e0b" : "rgba(255,255,255,.55)" }}>
-                  {state.ok ? "Connected" : state.bridge ? "Bridge up — Studio pending" : "Bridge offline"}
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: state.ok ? "#4ade80" : state.running ? "#f59e0b" : "#3f3f46", flexShrink: 0 }} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: state.ok ? "#4ade80" : state.running ? "#f59e0b" : "rgba(255,255,255,.55)" }}>
+                  {state.ok ? "Rojo attivo" : state.running ? "Rojo in avvio" : "Rojo spento"}
                 </span>
               </div>
               <div style={{ fontSize: 13, color: "rgba(255,255,255,.5)", lineHeight: 1.5 }}>{state.text}</div>
               {!state.ok && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "14px 16px", background: "rgba(255,255,255,0.04)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", fontSize: 13, color: "rgba(255,255,255,.65)", lineHeight: 1.6 }}>
-                  <span><b style={{ color: "#fff" }}>1.</b> In Roblox Studio open Assistant → … → Manage MCP Servers → turn ON “Enable Studio as MCP server”.</span>
-                  <span><b style={{ color: "#fff" }}>2.</b> The Vexa Bridge starts automatically with this app. If it is offline, restart the app.</span>
-                  <span><b style={{ color: "#fff" }}>3.</b> Open a place in Studio. The bridge connects automatically — press “Re-check”.</span>
+                  <span><b style={{ color: "#fff" }}>1.</b> Installa Rojo (aftman/rokit oppure rojo.space). Vexa lo rileva da solo.</span>
+                  <span><b style={{ color: "#fff" }}>2.</b> Premi <b style={{ color: "#fff" }}>Avvia Rojo</b>: parte il server locale sulla porta 34872.</span>
+                  <span><b style={{ color: "#fff" }}>3.</b> In Studio apri il plugin Rojo, premi <b style={{ color: "#fff" }}>Connect</b> e inserisci <b style={{ color: "#fff" }}>localhost:34872</b>.</span>
                 </div>
               )}
-              <div style={{ display: "flex", gap: 10 }}>
-                <button type="button" onClick={() => { setAttempt(a => a + 1); }} style={{ flex: 1, padding: "12px 20px", background: `linear-gradient(135deg, ${LEMON_BRIGHT} 0%, ${LEMON} 60%, #4338ca 100%)`, color: "#141005", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 24px rgba(252,216,70,0.40)" }}>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                {!state.ok && (
+                  <button type="button" onClick={startRojo} disabled={busy} style={{ flex: 1, minWidth: 130, padding: "12px 18px", background: `linear-gradient(135deg, ${LEMON_BRIGHT} 0%, ${LEMON} 60%, #4338ca 100%)`, color: "#141005", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: busy ? "wait" : "pointer", fontFamily: "inherit", boxShadow: "0 6px 24px rgba(99,102,241,0.40)", opacity: busy ? 0.7 : 1 }}>
+                    {busy ? "Avvio…" : "Avvia Rojo"}
+                  </button>
+                )}
+                <button type="button" onClick={() => setAttempt(v => v + 1)} style={{ flex: 1, minWidth: 100, padding: "12px 18px", background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,.85)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                   Re-check
                 </button>
-                <button type="button" onClick={close} style={{ padding: "12px 20px", background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,.8)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                  Close
+                {state.ok && (
+                  <button type="button" onClick={stopRojo} disabled={busy} style={{ padding: "12px 18px", background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,.85)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: busy ? "wait" : "pointer", fontFamily: "inherit" }}>
+                    Ferma
+                  </button>
+                )}
+                <button type="button" onClick={() => { rojoApi()?.openWorkspace().catch(() => {}); }} style={{ padding: "12px 18px", background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,.85)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                  Cartella
+                </button>
+                <button type="button" onClick={close} style={{ padding: "12px 18px", background: "transparent", color: "rgba(255,255,255,.6)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                  Chiudi
                 </button>
               </div>
             </>
@@ -616,10 +672,11 @@ export default function LocalDashboard() {
   useEffect(() => {
     let cancelled = false;
     const check = async () => {
+      const api = rojoApi();
+      if (!api) { if (!cancelled) setStudioConnected(false); return; }
       try {
-        const res = await fetch(`${BRIDGE_URL}/health`, { cache: "no-store", signal: AbortSignal.timeout(3000) });
-        const h = res.ok ? await res.json() : null;
-        if (!cancelled) setStudioConnected(h?.ok === true);
+        const s = await api.status();
+        if (!cancelled) setStudioConnected(s.running === true);
       } catch { if (!cancelled) setStudioConnected(false); }
     };
     check(); const iv = setInterval(check, 30000);
