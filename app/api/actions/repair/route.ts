@@ -8,10 +8,10 @@ import { proxyToCloud } from "@/lib/cloud-proxy"
 
 const MAX_BODY_BYTES = 2_000_000
 
-// Desktop bundle ships without the NVIDIA key: repair runs in the cloud
+// Desktop bundle ships without a cloud provider key: repair runs in the cloud
 // and this local route just forwards. On Vercel (or dev with keys) it runs.
 function shouldProxy(): boolean {
-  return !process.env.NVIDIA_API_KEY && !process.env.NVIDIA_GLM_API_KEY && !process.env.NVIDIA_GLM_FLASH_API_KEY && !process.env.LOCAL_LLM_URL
+  return !process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY && !process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY && !process.env.LOCAL_LLM_URL
 }
 
 export async function OPTIONS() {

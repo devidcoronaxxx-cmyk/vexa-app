@@ -1,6 +1,6 @@
 # Vexa — Tiered Local Models (no cloud fallback required)
 
-Vexa works **without** any local model (cloud NVIDIA generation). If you want
+Vexa works **without** any local model (cloud generation). If you want
 offline generation, pick the tier that matches your PC. Nothing is installed
 automatically; use `servers/install-models.py`.
 

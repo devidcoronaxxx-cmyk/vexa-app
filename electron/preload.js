@@ -5,9 +5,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   isElectron: true,
   openRobloxStudio: (placeId) => ipcRenderer.invoke("open-roblox-studio", placeId),
   getAppInfo: () => ipcRenderer.invoke("app:get-info"),
-  checkForUpdates: () => ipcRenderer.invoke("app:check-updates"),
-  setNimKey: (key) => ipcRenderer.invoke("vexa-set-nim-key", key),
-  getLocalLlmStatus: () => ipcRenderer.invoke("localllm:status"),
+  checkForUpdates: () => ipcRenderer.invoke("app:check-updates"),  getLocalLlmStatus: () => ipcRenderer.invoke("localllm:status"),
   startLocalLlm: () => ipcRenderer.invoke("localllm:start"),
   onLocalLlmStatus: (cb) => {
     const handler = (_e, s) => cb(s);

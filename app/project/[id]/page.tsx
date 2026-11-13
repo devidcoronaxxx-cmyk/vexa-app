@@ -9,7 +9,6 @@ import type { Profile, Project, Message } from "@/lib/supabase"
 import type { CSSProperties as Properties } from "react"
 import Settings from "@/app/components/Settings"
 import AdminPanel from "@/app/components/AdminPanel"
-import KeySetupNim from "@/app/components/KeySetupNim"
 import MechanicsCanvas, { deriveMechanics } from "@/app/components/MechanicsCanvas"
 import LandingStar from "@/app/components/LandingStar"
 
@@ -2404,7 +2403,6 @@ export default function ProjectChatPage() {
                     ))}
                   </div>
                 </div>
-                <KeySetupNim />
               </>
             ) : (
               <>

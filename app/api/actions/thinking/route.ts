@@ -6,9 +6,9 @@ import { getSession } from "@/lib/session"
 import { rateLimited } from "@/lib/rate-limit"
 import { proxyToCloud } from "@/lib/cloud-proxy"
 
-// Desktop bundle ships without the NVIDIA key: thinking runs in the cloud.
+// Desktop bundle ships without a cloud provider key: thinking runs in the cloud.
 function shouldProxy(): boolean {
-  return !process.env.NVIDIA_API_KEY && !process.env.NVIDIA_GLM_API_KEY && !process.env.NVIDIA_GLM_FLASH_API_KEY && !process.env.LOCAL_LLM_URL
+  return !process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY && !process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY && !process.env.LOCAL_LLM_URL
 }
 
 export async function OPTIONS() {

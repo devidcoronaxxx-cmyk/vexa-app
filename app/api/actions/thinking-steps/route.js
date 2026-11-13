@@ -6,7 +6,7 @@ import { rateLimited } from "@/lib/rate-limit"
 import { proxyToCloud } from "@/lib/cloud-proxy"
 
 function shouldProxy() {
-  return !process.env.NVIDIA_API_KEY && !process.env.NVIDIA_GLM_API_KEY && !process.env.NVIDIA_GLM_FLASH_API_KEY && !process.env.LOCAL_LLM_URL
+  return !process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY && !process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY && !process.env.LOCAL_LLM_URL
 }
 
 export async function POST(req) {

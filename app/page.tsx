@@ -44,7 +44,7 @@ const COMP_ROWS = [
 
 const FAQS = [
   { q: "È gratis?", a: "Sì. Vexa è completamente gratis: niente carta di credito, niente paywall, niente limiti." },
-  { q: "Funziona offline?", a: "Dopo aver scaricato i modelli (Tier S/M/L), Vexa genera in locale senza internet. Senza modelli, usa il cloud NVIDIA come fallback." },
+  { q: "Funziona offline?", a: "Dopo aver scaricato i modelli (Tier S/M/L), Vexa genera in locale senza internet. Senza modelli, usa un provider cloud configurato (Claude/GPT/Gemini) come fallback." },
   { q: "Cosa significa team di modelli?", a: "Qwen scrive codice e blueprint. Hunyuan3D costruisce mesh 3D reali quando il server locale è attivo. Gli script referenziano gli asset generati." },
   { q: "Devo sapere programmare?", a: "No. Descrivi cosa vuoi e Vexa scrive il Luau. Se sai programmare, puoi leggere e modificare tutto." },
   { q: "Come arrivano le cose in Studio?", a: "Tramite Rojo: Vexa scrive i file del progetto e Rojo li sincronizza live dentro Roblox Studio." },

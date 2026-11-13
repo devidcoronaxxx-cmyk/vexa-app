@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { CORS_HEADERS, handleOptions } from "@/lib/cors"
-import { NVIDIA_MODELS, currentPrimaryModel, HUNYUAN_MODEL, TRELLIS_MODEL, hunyuanUrl, trellisUrl, is3dServerAlive } from "@/lib/ai"
+import { currentPrimaryModel, HUNYUAN_MODEL, TRELLIS_MODEL, hunyuanUrl, trellisUrl, is3dServerAlive } from "@/lib/ai"
 
 export async function OPTIONS() {
   return handleOptions()
@@ -17,7 +17,6 @@ export async function GET() {
 
   const models = [
     { id: "vexa-team", name: "Vexa Team", provider: "Vexa" },
-    ...NVIDIA_MODELS.map(id => ({ id, name: id.split("/").pop(), provider: "NVIDIA" })),
     ...(hunyuanAlive ? [{ id: HUNYUAN_MODEL, name: "Hunyuan3D 2.1", provider: "Local 3D", kind: "asset3d", license: "Tencent Hunyuan (free, local)" }] : []),
     ...(trellisAlive ? [{ id: TRELLIS_MODEL, name: "TRELLIS 2 (fast)", provider: "Local 3D", kind: "asset3d-image", license: "MIT (free, local)" }] : []),
   ]
@@ -25,7 +24,7 @@ export async function GET() {
   return NextResponse.json({
     models,
     default: currentPrimaryModel(),
-    keyed: Boolean(process.env.NVIDIA_API_KEY || process.env.NVIDIA_GLM_API_KEY || process.env.NVIDIA_GLM_FLASH_API_KEY),
+    keyed: Boolean(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY),
     // Convenience for UIs that want to explain per-model availability.
     backends: {
       hunyuan3d: hunyuanAlive ? hunyuanUrl() : null,

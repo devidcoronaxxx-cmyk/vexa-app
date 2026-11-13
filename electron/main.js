@@ -15,155 +15,6 @@ const APP_ID = "com.vexa.ai";
 // Single instance: the app bundles a local server on a fixed port, so a second
 // copy must never start. If another instance is already running we just focus
 // its window (and optionally hand it a vexa:// deep link) and exit.
-// ---------------------------------------------------------------------------
-const gotLock = app.requestSingleInstanceLock();
-if (!gotLock) {
-  app.quit();
-} else {
-  app.on("second-instance", (_event, argv, _workingDirectory) => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
-    const deepLink = argv.find((a) => a.startsWith(`${PROTOCOL}://`));
-    if (deepLink) handleDeepLink(deepLink);
-  });
-}
-
-// Windows: stable AppUserModelID so notifications/taskbar grouping work.
-app.setAppUserModelId(APP_ID);
-app.setName("Vexa");
-
-let mainWindow = null;
-let tray = null;
-let nextServer = null;
-let bridgeProc = null;
-let rojoManagerRef = null;
-let localLlmProc = null;
-let hunyuanPackProc = null;
-let hunyuanBridgeProc = null;
-let appIsQuitting = false;
-
-const localLlmState = { state: "off", progress: 0, error: null };
-const hunyuanState = { state: "off", progress: 0, error: null };
-
-const PORT = 3000;
-const BRIDGE_PORT = 8765;
-const LOCAL_LLM_PORT = 9290;
-const LOCAL_LLM_URL = `http://127.0.0.1:${LOCAL_LLM_PORT}`;
-const LOCAL_LLM_MODEL = "Qwen3-8B-Q4_K_M.gguf";
-const LOCAL_LLM_REPO = "https://huggingface.co/Qwen/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf";
-// 3D asset backends — both live on the user's machine (zero cost). The Hunyuan
-// runtime is fully managed by the app (downloaded into userData so EVERYTHING
-// ships inside the Vexa download): the pack's server runs on HUNYUAN_PACK_PORT
-// and Vexa adds a tiny bridge on HUNYUAN_BRIDGE_PORT that exposes the stable
-// /health + /generate contract the bundled server uses. LOCAL_HUNYUAN_URL thus
-// points at the bridge.
-const HUNYUAN_PACK_PORT = 8080;
-const HUNYUAN_BRIDGE_PORT = 8081;
-const LOCAL_HUNYUAN_URL = process.env.LOCAL_HUNYUAN_URL || `http://127.0.0.1:${HUNYUAN_BRIDGE_PORT}`;
-const LOCAL_TRELLIS_URL = process.env.LOCAL_TRELLIS_URL || "http://127.0.0.1:7860";
-const HUNYUAN_PACK_REPO = "YanWenKun/Hunyuan3D-2-WinPortable";
-const SEVENZIP_URL = "https://www.7-zip.org/a/7zr.exe";
-const isDev = !app.isPackaged;
-const APP_VERSION = app.getVersion();
-
-// Register as the default handler for vexa:// URLs.
-if (process.defaultApp && process.argv.length >= 2) {
-  app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [path.resolve(process.argv[1])]);
-} else {
-  app.setAsDefaultProtocolClient(PROTOCOL);
-}
-
-function parseDeepLink(url) {
-  try {
-    const u = new URL(url);
-    let route = u.pathname && u.pathname !== "/" ? u.pathname : (u.searchParams.get("route") || "/local");
-    if (route === "/open" || route === "/app" || route === "") route = "/local";
-    const code = u.searchParams.get("code");
-    return { route, code };
-  } catch {
-    return { route: "/local", code: null };
-  }
-}
-
-function handleDeepLink(url) {
-  const { route, code } = parseDeepLink(url);
-  console.log("[electron] deep link:", url, "->", route, code ? "(code: " + code + ")" : "");
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-
-  if (code) {
-    mainWindow.webContents.executeJavaScript(
-      `localStorage.setItem("vexa_pending_code", ${JSON.stringify(code)})`
-    );
-  }
-
-  const target = `http://localhost:${PORT}${route}`;
-  if (!mainWindow.webContents.getURL().startsWith(`http://localhost:${PORT}`)) {
-    mainWindow.loadURL(target);
-  } else {
-    mainWindow.webContents.executeJavaScript(`window.location.href = ${JSON.stringify(target)}`);
-  }
-}
-
-function isPortInUse(port) {
-  return new Promise((resolve) => {
-    const server = net.createServer();
-    server.once("error", () => resolve(true));
-    server.once("listening", () => { server.close(); resolve(false); });
-    server.listen(port);
-  });
-}
-
-function findNode() {
-  // In packaged app, prefer the bundled Node.js runtime
-  if (!isDev) {
-    const bundled = path.join(process.resourcesPath, "node-runtime", "node.exe");
-    if (fs.existsSync(bundled)) return bundled;
-  }
-  try {
-    const { execSync } = require("child_process");
-    if (process.platform === "win32") {
-      return execSync("where node", { encoding: "utf-8" }).trim().split("\n")[0].trim();
-    }
-    return execSync("which node", { encoding: "utf-8" }).trim();
-  } catch {
-    return "node";
-  }
-}
-
-// Minimal .env parser so the packaged app can read secrets from the bundled
-// .env.local (it can't be read from the asar by the standalone server itself).
-// Values already present in process.env win — they are the source of truth.
-function loadEnvFile(filePath) {
-  try {
-    if (!fs.existsSync(filePath)) return {};
-    const out = {};
-    for (const raw of fs.readFileSync(filePath, "utf-8").split(/\r?\n/)) {
-      const line = raw.trim();
-      if (!line || line.startsWith("#")) continue;
-      const m = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
-      if (m) out[m[1]] = m[2].replace(/^["']|["']$/g, "");
-    }
-    return out;
-  } catch (e) {
-    console.error("[electron] failed to read env file:", e.message);
-    return {};
-  }
-}
-
-// Add NVIDIA keys the user created in-app (stored in userData so they survive
-// app updates). Applied last so they win over bundled/process env.
-function mergeUserNvidiaKeys(env) {
-  const userFile = path.join(app.getPath("userData"), "vexa-keys.env");
-  const userKeys = loadEnvFile(userFile);
-  for (const [k, v] of Object.entries(userKeys)) {
-    if (/^NVIDIA_[A-Z0-9_]+$/.test(k) && v) env[k] = v;
-  }
-  return env;
-}
-
-// ---------------------------------------------------------------------------
 // Bundled local LLM (zero-key generations)
 // ---------------------------------------------------------------------------
 function setLlmState(s) {
@@ -607,7 +458,7 @@ async function startNextServer() {
       const nextBin = path.join(appDir, "node_modules", "next", "dist", "bin", "next");
       cmd = "node";
       args = [`"${nextBin}"`, "dev", "-p", String(PORT)];
-      opts = { cwd: appDir, shell: true, env: mergeUserNvidiaKeys({ ...process.env, PORT: String(PORT), LOCAL_LLM_URL, LOCAL_HUNYUAN_URL, LOCAL_TRELLIS_URL }) };
+      opts = { cwd: appDir, shell: true, env: { ...process.env, PORT: String(PORT), LOCAL_LLM_URL, LOCAL_HUNYUAN_URL, LOCAL_TRELLIS_URL } };
     } else {
       const unpackedDir = path.join(process.resourcesPath, "app.asar.unpacked");
       const standaloneDir = path.join(unpackedDir, ".next", "standalone");
@@ -640,7 +491,7 @@ async function startNextServer() {
       console.log("[electron] server script:", serverScript);
 
       const bundledEnv = loadEnvFile(path.join(process.resourcesPath, "app", ".env.local"));
-      const serverEnv = mergeUserNvidiaKeys({ ...bundledEnv, ...process.env, PORT: String(PORT), HOSTNAME: "127.0.0.1", LOCAL_LLM_URL, LOCAL_HUNYUAN_URL, LOCAL_TRELLIS_URL });
+      const serverEnv = { ...bundledEnv, ...process.env, PORT: String(PORT), HOSTNAME: "127.0.0.1", LOCAL_LLM_URL, LOCAL_HUNYUAN_URL, LOCAL_TRELLIS_URL };
 
       cmd = nodeBin;
       args = [serverScript];
@@ -687,109 +538,6 @@ function killNextServer() {
   } catch (e) {
     console.error("[electron] kill server:", e.message);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Vexa Bridge — local MCP client for Roblox Studio (127.0.0.1:8765).
-// The bridge is bundled with the app (resources/bridge) and started
-// automatically so the app can connect to Studio without a plugin.
-// ---------------------------------------------------------------------------
-
-function getBridgeScript() {
-  if (isDev) return path.join(__dirname, "..", "bridge", "vexa-bridge.mjs");
-  return path.join(process.resourcesPath, "bridge", "vexa-bridge.mjs");
-}
-
-async function isBridgeRunning() {
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 2000);
-    const res = await fetch(`http://127.0.0.1:${BRIDGE_PORT}/health`, { signal: ctrl.signal });
-    clearTimeout(t);
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-async function startBridge() {
-  if (await isBridgeRunning()) {
-    console.log("[electron] bridge already running on", BRIDGE_PORT);
-    return;
-  }
-  const script = getBridgeScript();
-  if (!fs.existsSync(script)) {
-    console.error("[electron] bridge script not found:", script);
-    return;
-  }
-  const nodeBin = findNode();
-  console.log("[electron] starting bridge:", script, "with", nodeBin);
-  bridgeProc = spawn(nodeBin, [script], {
-    cwd: path.dirname(script),
-    env: { ...process.env, VEXA_BRIDGE_PORT: String(BRIDGE_PORT) },
-    windowsHide: true,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  bridgeProc.stdout.on("data", (d) => console.log("[bridge]", d.toString()));
-  bridgeProc.stderr.on("data", (d) => console.error("[bridge]", d.toString()));
-  bridgeProc.on("error", (e) => console.error("[bridge] spawn error:", e.message));
-  bridgeProc.on("close", (code) => {
-    console.log("[bridge] exited", code);
-    bridgeProc = null;
-  });
-}
-
-function killBridge() {
-  if (!bridgeProc) return;
-  const pid = bridgeProc.pid;
-  bridgeProc = null;
-  if (!pid) return;
-  try {
-    if (process.platform === "win32") {
-      exec(`taskkill /pid ${pid} /T /F`, { windowsHide: true });
-    } else {
-      process.kill(pid, "SIGTERM");
-    }
-  } catch (e) {
-    console.error("[electron] kill bridge:", e.message);
-  }
-}
-
-// Keep the bundled Vexa Studio plugin in sync with %LOCALAPPDATA%\Roblox\Plugins
-// so Studio loads it automatically across version updates.
-function ensureStudioPlugin() {
-  try {
-    const local = process.env.LOCALAPPDATA || path.join(process.env.USERPROFILE || "", "AppData", "Local");
-    const src = isDev
-      ? path.join(__dirname, "..", "bridge", "studio-plugin", "Vexa")
-      : path.join(process.resourcesPath, "bridge", "studio-plugin", "Vexa");
-    const dst = path.join(local, "Roblox", "Plugins", "Vexa");
-    if (!fs.existsSync(path.join(src, "init.lua"))) return;
-    fs.mkdirSync(dst, { recursive: true });
-    fs.copyFileSync(path.join(src, "init.lua"), path.join(dst, "init.lua"));
-    console.log("[electron] Vexa Studio plugin installed:", dst);
-  } catch (e) {
-    console.error("[electron] plugin install:", e.message);
-  }
-}
-
-// Keep the bridge alive: if it dies (crash, kill, update), start it again within
-// a few seconds so the app never gets stuck in "disconnected" permanently.
-let bridgeWatchdog = null;
-function superviseBridge() {
-  if (bridgeWatchdog) return;
-  bridgeWatchdog = setInterval(async () => {
-    try {
-      const up = await isBridgeRunning();
-      if (!up) {
-        console.log("[electron] bridge not running, restarting...");
-        startBridge();
-      }
-    } catch (e) {
-      console.error("[electron] bridge watchdog error:", e.message);
-    }
-  }, 5000);
-  bridgeWatchdog.unref && bridgeWatchdog.unref();
 }
 
 function isAllowedUrl(url) {
@@ -1275,30 +1023,7 @@ if (gotLock) {
       return { ok: true, version: APP_VERSION };
     });
 
-    // Save the user's own NVIDIA NIM key (from the in-app GLM-5.3 setup sheet)
-    // so the local server stops proxying to the cloud and generates with their
-    // key, then relaunch so the server picks it up.
-    ipcMain.handle("vexa-set-nim-key", async (_event, apiKey) => {
-      const key = String(apiKey || "").trim();
-      if (!/^nvapi-[A-Za-z0-9_-]{16,}$/.test(key)) {
-        return { success: false, error: "Invalid NVIDIA key: must start with nvapi-." };
-      }
-      const userFile = path.join(app.getPath("userData"), "vexa-keys.env");
-      try {
-        fs.mkdirSync(path.dirname(userFile), { recursive: true });
-        fs.writeFileSync(
-          userFile,
-          `# Vexa - NVIDIA NIM key created by the user\n# Used by the bundled server so each user has their own rate limits.\nNVIDIA_GLM_API_KEY=${key}\n`,
-          "utf-8"
-        );
-        setTimeout(() => { app.relaunch(); app.exit(0); }, 800);
-        return { success: true };
-      } catch (e) {
-        return { success: false, error: e.message };
-      }
-    });
-
-    app.on("activate", () => {
+app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
 
@@ -1338,7 +1063,6 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
   appIsQuitting = true;
   killNextServer();
-  killBridge();
   killLocalLlm();
   killHunyuan();
   try { rojoManagerRef && rojoManagerRef.stop(); } catch {}
