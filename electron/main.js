@@ -15,6 +15,143 @@ const APP_ID = "com.vexa.ai";
 // Single instance: the app bundles a local server on a fixed port, so a second
 // copy must never start. If another instance is already running we just focus
 // its window (and optionally hand it a vexa:// deep link) and exit.
+// ---------------------------------------------------------------------------
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on("second-instance", (_event, argv, _workingDirectory) => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+    const deepLink = argv.find((a) => a.startsWith(`${PROTOCOL}://`));
+    if (deepLink) handleDeepLink(deepLink);
+  });
+}
+
+// Windows: stable AppUserModelID so notifications/taskbar grouping work.
+app.setAppUserModelId(APP_ID);
+app.setName("Vexa");
+
+let mainWindow = null;
+let tray = null;
+let nextServer = null;
+let bridgeProc = null;
+let rojoManagerRef = null;
+let localLlmProc = null;
+let hunyuanPackProc = null;
+let hunyuanBridgeProc = null;
+let appIsQuitting = false;
+
+const localLlmState = { state: "off", progress: 0, error: null };
+const hunyuanState = { state: "off", progress: 0, error: null };
+
+const PORT = 3000;
+const BRIDGE_PORT = 8765;
+const LOCAL_LLM_PORT = 9290;
+const LOCAL_LLM_URL = `http://127.0.0.1:${LOCAL_LLM_PORT}`;
+const LOCAL_LLM_MODEL = "Qwen3-8B-Q4_K_M.gguf";
+const LOCAL_LLM_REPO = "https://huggingface.co/Qwen/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf";
+// 3D asset backends — both live on the user's machine (zero cost). The Hunyuan
+// runtime is fully managed by the app (downloaded into userData so EVERYTHING
+// ships inside the Vexa download): the pack's server runs on HUNYUAN_PACK_PORT
+// and Vexa adds a tiny bridge on HUNYUAN_BRIDGE_PORT that exposes the stable
+// /health + /generate contract the bundled server uses. LOCAL_HUNYUAN_URL thus
+// points at the bridge.
+const HUNYUAN_PACK_PORT = 8080;
+const HUNYUAN_BRIDGE_PORT = 8081;
+const LOCAL_HUNYUAN_URL = process.env.LOCAL_HUNYUAN_URL || `http://127.0.0.1:${HUNYUAN_BRIDGE_PORT}`;
+const LOCAL_TRELLIS_URL = process.env.LOCAL_TRELLIS_URL || "http://127.0.0.1:7860";
+const HUNYUAN_PACK_REPO = "YanWenKun/Hunyuan3D-2-WinPortable";
+const SEVENZIP_URL = "https://www.7-zip.org/a/7zr.exe";
+const isDev = !app.isPackaged;
+const APP_VERSION = app.getVersion();
+
+// Register as the default handler for vexa:// URLs.
+if (process.defaultApp && process.argv.length >= 2) {
+  app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [path.resolve(process.argv[1])]);
+} else {
+  app.setAsDefaultProtocolClient(PROTOCOL);
+}
+
+function parseDeepLink(url) {
+  try {
+    const u = new URL(url);
+    let route = u.pathname && u.pathname !== "/" ? u.pathname : (u.searchParams.get("route") || "/local");
+    if (route === "/open" || route === "/app" || route === "") route = "/local";
+    const code = u.searchParams.get("code");
+    return { route, code };
+  } catch {
+    return { route: "/local", code: null };
+  }
+}
+
+function handleDeepLink(url) {
+  const { route, code } = parseDeepLink(url);
+  console.log("[electron] deep link:", url, "->", route, code ? "(code: " + code + ")" : "");
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+
+  if (code) {
+    mainWindow.webContents.executeJavaScript(
+      `localStorage.setItem("vexa_pending_code", ${JSON.stringify(code)})`
+    );
+  }
+
+  const target = `http://localhost:${PORT}${route}`;
+  if (!mainWindow.webContents.getURL().startsWith(`http://localhost:${PORT}`)) {
+    mainWindow.loadURL(target);
+  } else {
+    mainWindow.webContents.executeJavaScript(`window.location.href = ${JSON.stringify(target)}`);
+  }
+}
+
+function isPortInUse(port) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.once("error", () => resolve(true));
+    server.once("listening", () => { server.close(); resolve(false); });
+    server.listen(port);
+  });
+}
+
+function findNode() {
+  // In packaged app, prefer the bundled Node.js runtime
+  if (!isDev) {
+    const bundled = path.join(process.resourcesPath, "node-runtime", "node.exe");
+    if (fs.existsSync(bundled)) return bundled;
+  }
+  try {
+    const { execSync } = require("child_process");
+    if (process.platform === "win32") {
+      return execSync("where node", { encoding: "utf-8" }).trim().split("\n")[0].trim();
+    }
+    return execSync("which node", { encoding: "utf-8" }).trim();
+  } catch {
+    return "node";
+  }
+}
+
+// Minimal .env parser so the packaged app can read secrets from the bundled
+// .env.local (it can't be read from the asar by the standalone server itself).
+// Values already present in process.env win — they are the source of truth.
+function loadEnvFile(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return {};
+    const out = {};
+    for (const raw of fs.readFileSync(filePath, "utf-8").split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith("#")) continue;
+      const m = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+      if (m) out[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    }
+    return out;
+  } catch (e) {
+    console.error("[electron] failed to read env file:", e.message);
+    return {};
+  }
+}
+
 // Bundled local LLM (zero-key generations)
 // ---------------------------------------------------------------------------
 function setLlmState(s) {
@@ -1023,7 +1160,7 @@ if (gotLock) {
       return { ok: true, version: APP_VERSION };
     });
 
-app.on("activate", () => {
+    app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
 
