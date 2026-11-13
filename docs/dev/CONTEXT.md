@@ -1,6 +1,6 @@
 # Vexa — Project Context (resume here)
 
-Cartella: `C:\Users\Windows 11\Documents\Default Project\vexa`
+Cartella: repository locale del progetto `vexa`
 Branch: `main`, working tree pulito, **nessun git remote** (commit solo locali).
 
 ## Ultimo stato

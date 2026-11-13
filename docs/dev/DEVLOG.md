@@ -39,7 +39,7 @@ Registro di lavorazione del progetto. Ogni sessione viene aggiunta in cima (più
 - `openai/gpt-oss-20b` (veloce+2s, ma 3.6B attivi) → candidato per fill/refine rapidi
 - DeepSeek v3/v4, Qwen3-coder, GLM, minimax → 404/410 (non serviti)
 - `ANIMATION_FALLBACK_ORDER` = [super-120b, lightning-30b] (super ~170 tok/s rifinisce ciò che ultra non chiude nel window)
-- Chiave user yes-`nvapi-hYaiV-...` (len 70) sostituita come NVIDIA_API_KEY in `.env.local`. **Attenzione: la chiave NVIDIA va e viene** — often 429/timeout variabile (test: run buona 185s → run successiva "all models failed" 285s). La catena di fallback copre i momenti no.
+- Chiave NVIDIA dell'utente (redatta, len 70) sostituita come NVIDIA_API_KEY in `.env.local`. **Attenzione: la chiave NVIDIA va e viene** — often 429/timeout variabile (test: run buona 185s → run successiva "all models failed" 285s). La catena di fallback copre i momenti no.
 
 **Test reali (runGenerate, prompt "fammi un obby facile", ultra-550b)**:
 - Run OK (1): 25 instances, 4 script (`ObbyCheckpointSystem`, `ObbyWinSystem`, `ObbyWinClient`, `ObbyLightingSetup`), 116.7s.

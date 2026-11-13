@@ -67,7 +67,9 @@ function migrateProjects(u: string) {
 interface LocalUser { id: string; email: string; passHash: string; is_admin: boolean; created_at: string }
 
 const ADMIN_EMAIL = "admin@vexa.local";
-const ADMIN_PASS = "Vexa-Admin-2026";
+// No hardcoded password: the offline admin is only seeded when the operator
+// supplies one at build time, so no credential ships in the repo or the bundle.
+const ADMIN_PASS = process.env.NEXT_PUBLIC_LOCAL_ADMIN_PASS || "";
 
 async function sha256(text: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -98,7 +100,7 @@ function isLocalAdmin(id: string): boolean {
 }
 
 async function seedAdminIfNeeded(): Promise<void> {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !ADMIN_PASS) return;
   const users = getLocalUsers();
   if (users.some(u => u.is_admin)) return;
   const passHash = await sha256(ADMIN_PASS);

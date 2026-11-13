@@ -7,7 +7,7 @@ import fs from "node:fs"
 import path from "node:path"
 import os from "node:os"
 
-const VEXA_DIR = "C:\\Users\\Windows 11\\Documents\\Vexa Project\\vexa"
+const VEXA_DIR = process.env.VEXA_DIR || process.cwd()
 const ELECTRON = path.join(VEXA_DIR, "node_modules", "electron", "dist", "electron.exe")
 const USER_DATA = path.join(process.env.APPDATA || "", "Vexa")
 const PACK = path.join(USER_DATA, "hunyuan-pack")

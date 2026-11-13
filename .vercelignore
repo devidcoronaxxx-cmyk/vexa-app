@@ -5,3 +5,7 @@ dist
 .git
 app.asar
 app.asar.unpacked
+.env*
+Temp
+electron-build.log
+*.log
