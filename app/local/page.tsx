@@ -438,6 +438,8 @@ export default function LocalDashboard() {
   }), [userEmail]);
 
   useEffect(() => {
+    // Never leave the app stuck on the spinner if a network call stalls.
+    const authSafety = setTimeout(() => setAuthChecked(true), 10000);
     const tryRefresh = async () => {
       const online = await supabaseReachable();
       if (!online) {
@@ -463,6 +465,7 @@ export default function LocalDashboard() {
             method: "POST",
             headers: { "Content-Type": "application/json", apikey: SB_KEY },
             body: JSON.stringify({ refresh_token: refresh }),
+            signal: AbortSignal.timeout(6000),
           });
           const data = await res.json();
           if (res.ok && data.access_token) {
@@ -490,7 +493,8 @@ export default function LocalDashboard() {
       setAuthChecked(true);
       if (localStorage.getItem("gx_sb_token")) setProjects(loadProjects());
     };
-    tryRefresh();
+    tryRefresh().finally(() => clearTimeout(authSafety));
+    return () => clearTimeout(authSafety);
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -512,6 +516,7 @@ export default function LocalDashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json", apikey: SB_KEY },
         body: JSON.stringify({ email: loginEmail, password: loginPass }),
+        signal: AbortSignal.timeout(10000),
       });
       const data = await res.json();
       if (!res.ok || !data.access_token) {

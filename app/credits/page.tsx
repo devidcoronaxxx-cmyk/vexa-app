@@ -39,7 +39,7 @@ export default function CreditsPage() {
               troojin
             </div>
             <p style={{ fontSize: 13.5, color: "rgba(26, 31, 46,0.6)", lineHeight: 1.7, margin: 0 }}>
-              Original creator of the Vexa project (formerly Galaxium), from which this project was forked and renamed.
+              Original creator of the Vexa project.
             </p>
           </div>
 

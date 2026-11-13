@@ -2007,6 +2007,13 @@ export default function ProjectChatPage() {
   const currentMode = MODES.find(m => m.id === mode) || MODES[0]
   const currentType = PROJECT_TYPES.find(t => t.id === projectType) || PROJECT_TYPES[0]
 
+  useEffect(() => {
+    if (profile && project) return
+    // A stalled session/profile fetch must not leave this page on "Loading…".
+    const stall = setTimeout(() => router.replace("/local"), 15000)
+    return () => clearTimeout(stall)
+  }, [profile, project, router])
+
   if (!profile || !project) {
     return (
       <div style={{ minHeight: "100vh", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
